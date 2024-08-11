@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cn.addenda.fp.rbac.mapper.UserRoleMapper">
+  <resultMap id="tUserRoleRm" type="cn.addenda.fp.rbac.pojo.entity.UserRole">
+    <id property="id" column="id"/>
+  </resultMap>
+
+  <sql id="allFields">
+    id, user_id, role_id, access_type, rule_id_list
+  </sql>
+
+  <insert id="insert">
+    insert into t_user_role
+    set id = #{id,jdbcType=BIGINT},
+    user_id = #{userId,jdbcType=BIGINT},
+    role_id = #{roleId,jdbcType=BIGINT},
+    access_type = #{accessType,jdbcType=VARCHAR},
+    rule_id_list = #{ruleIdList,jdbcType=VARCHAR}
+  </insert>
+
+  <update id="updateNonNullFieldsById">
+    update t_user_role
+    <set>
+      <if test="userId != null">
+        user_id = #{userId,jdbcType=BIGINT},
+      </if>
+      <if test="roleId != null">
+        role_id = #{roleId,jdbcType=BIGINT},
+      </if>
+      <if test="accessType != null">
+        access_type = #{accessType,jdbcType=VARCHAR},
+      </if>
+      <if test="ruleIdList != null">
+        rule_id_list = #{ruleIdList,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=BIGINT}
+  </update>
+
+  <select id="idExists" resultType="java.lang.Integer">
+    SELECT 1
+    FROM t_user_role
+    WHERE id = #{id,jdbcType=BIGINT}
+    limit 1
+  </select>
+
+  <select id="queryRoleOfUser" resultMap="tUserRoleRm">
+    select
+    <include refid="allFields"/>
+    from t_user_role
+    where user_id = #{userId,jdbcType=BIGINT}
+    <if test="accessType != null">
+      and access_type = #{accessType,jdbcType=VARCHAR}
+    </if>
+  </select>
+
+  <delete id="deleteById">
+    delete
+    from t_user_role
+    where id = #{id,jdbcType=BIGINT}
+  </delete>
+
+  <select id="queryUserOnRole" resultMap="cn.addenda.fp.rbac.mapper.UserMapper.tUserRm">
+    select user.id as id,
+    user.user_id as user_id,
+    user.user_name as user_name,
+    user.user_email as user_email,
+    user.status as status
+    from t_user_role ur
+    join t_user user on ur.user_id = user.id
+    where ur.role_id = #{roleId,jdbcType=BIGINT}
+  </select>
+
+  <select id="queryByNonNullFields" resultMap="tUserRoleRm">
+    select
+    <include refid="allFields"/>
+    from t_user_role
+    <where>
+      <if test="id != null">
+        and id = #{id,jdbcType=BIGINT}
+      </if>
+      <if test="userId != null">
+        and user_id = #{userId,jdbcType=BIGINT}
+      </if>
+      <if test="roleId != null">
+        and role_id = #{roleId,jdbcType=BIGINT}
+      </if>
+      <if test="accessType != null">
+        and access_type = #{accessType,jdbcType=VARCHAR}
+      </if>
+      <if test="ruleIdList != null">
+        and rule_id_list like concat('%', #{ruleIdList,jdbcType=VARCHAR}, '%')
+      </if>
+    </where>
+  </select>
+
+  <delete id="deleteByUserId">
+    delete
+    from t_user_role
+    where user_id = #{userId,jdbcType=BIGINT}
+  </delete>
+
+  <select id="roleIdExists" resultType="java.lang.Integer">
+    SELECT 1
+    FROM t_user_role
+    WHERE role_id = #{roleId,jdbcType=BIGINT}
+    limit 1
+  </select>
+
+  <select id="ruleIdExists" resultType="java.lang.Integer">
+    SELECT 1
+    FROM t_user_role
+    WHERE role_id like concat('%', #{ruleId,jdbcType=BIGINT}, '%')
+    limit 1
+  </select>
+</mapper>

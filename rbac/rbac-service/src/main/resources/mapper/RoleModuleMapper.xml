@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cn.addenda.fp.rbac.mapper.RoleModuleMapper">
+  <resultMap id="tUserRoleRm" type="cn.addenda.fp.rbac.pojo.entity.RoleModule">
+    <id property="id" column="id"/>
+  </resultMap>
+
+  <sql id="allFields">
+    id, role_id, module_id
+  </sql>
+
+  <select id="queryModuleOfRole" resultMap="tUserRoleRm">
+    select
+    <include refid="allFields"/>
+    from t_role_module
+    where role_id = #{roleId,jdbcType=BIGINT}
+  </select>
+
+  <insert id="insert">
+    insert into t_role_module
+    set id = #{id,jdbcType=BIGINT},
+    role_id = #{roleId,jdbcType=BIGINT},
+    module_id = #{moduleId,jdbcType=BIGINT}
+  </insert>
+
+  <delete id="deleteById">
+    delete
+    from t_role_module
+    where id = #{id,jdbcType=BIGINT}
+  </delete>
+
+  <select id="queryRoleOnModule" resultMap="cn.addenda.fp.rbac.mapper.RoleMapper.tRoleRm">
+    select role.id as id,
+    role.role_code as role_code,
+    role.role_name as role_name,
+    role.status as status
+    from t_role role
+    join t_role_module rm on role.id = rm.role_id
+    where rm.module_id = #{moduleId,jdbcType=BIGINT}
+  </select>
+
+  <delete id="deleteByRoleId">
+    delete
+    from t_role_module
+    where role_id = #{roleId,jdbcType=BIGINT}
+  </delete>
+
+  <select id="moduleIdExists" resultType="java.lang.Integer">
+    SELECT 1
+    FROM t_role_module
+    WHERE module_id = #{moduleId,jdbcType=BIGINT}
+    limit 1
+  </select>
+</mapper>

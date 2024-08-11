@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cn.addenda.fp.rbac.mapper.UserRoleRecordMapper">
+  <resultMap id="tUserRoleRecordRm" type="cn.addenda.fp.rbac.pojo.entity.UserRoleRecord">
+    <id property="id" column="id"/>
+  </resultMap>
+
+  <sql id="allFields">
+    id, user_id, role_id, type
+  </sql>
+
+  <insert id="insert">
+    insert into t_user_role_record
+    set id = #{id,jdbcType=BIGINT},
+    user_id = #{userId,jdbcType=BIGINT},
+    role_id = #{roleId,jdbcType=BIGINT},
+    type = #{type,jdbcType=VARCHAR}
+  </insert>
+
+  <select id="queryUserRoleRecordByUserId" resultMap="tUserRoleRecordRm">
+    select
+    <include refid="allFields"/>
+    from t_user_role_record
+    where user_id = #{userId,jdbcType=BIGINT}
+  </select>
+
+  <delete id="deleteByUserId">
+    delete
+    from t_user_role_record
+    where user_id = #{userId,jdbcType=BIGINT}
+  </delete>
+
+  <select id="queryLoginRole" resultMap="cn.addenda.fp.rbac.mapper.UserRoleMapper.tUserRoleRm">
+    select t_user_role.id as id,
+    t_user_role.user_id as user_id,
+    t_user_role.role_id as role_id,
+    t_user_role.access_type as access_type,
+    t_user_role.rule_id_list as rule_id_list
+    from t_user_role_record
+    join t_user_role on t_user_role_record.role_id = t_user_role.role_id and
+    t_user_role_record.user_id = t_user_role.user_id
+    where t_user_role_record.user_id = #{userId,jdbcType=BIGINT}
+  </select>
+</mapper>

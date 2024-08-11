@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cn.addenda.fp.rbac.mapper.UserMapper">
+  <resultMap id="tUserRm" type="cn.addenda.fp.rbac.pojo.entity.User">
+    <id property="id" column="id"/>
+  </resultMap>
+
+  <sql id="allFields">
+    id, user_code, user_name, user_email, status
+  </sql>
+
+  <insert id="insert">
+    insert into t_user
+    set id = #{id,jdbcType=BIGINT},
+    user_code = #{userCode,jdbcType=VARCHAR},
+    user_name = #{userName,jdbcType=VARCHAR},
+    user_email = #{userEmail,jdbcType=VARCHAR},
+    status = #{status,jdbcType=VARCHAR}
+  </insert>
+
+  <select id="userCodeExists" resultType="java.lang.Integer">
+    SELECT 1
+    FROM t_user
+    WHERE user_code = #{userCode,jdbcType=VARCHAR}
+    limit 1
+  </select>
+
+  <select id="userEmailExists" resultType="java.lang.Integer">
+    SELECT 1
+    FROM t_user
+    WHERE user_email = #{userEmail,jdbcType=VARCHAR}
+    limit 1
+  </select>
+
+  <select id="idExists" resultType="java.lang.Integer">
+    SELECT 1
+    FROM t_user
+    WHERE id = #{id,jdbcType=BIGINT}
+    limit 1
+  </select>
+
+  <delete id="deleteById">
+    delete
+    from t_user
+    where id = #{id,jdbcType=BIGINT}
+  </delete>
+
+  <select id="queryByUserCode" resultMap="tUserRm">
+    select
+    <include refid="allFields"/>
+    from t_user
+    where user_code = #{userCode,jdbcType=VARCHAR}
+  </select>
+
+  <select id="queryByNonNullFields" resultMap="tUserRm">
+    select
+    <include refid="allFields"/>
+    from t_user
+    <where>
+      <if test="id != null">
+        and id = #{id,jdbcType=BIGINT}
+      </if>
+      <if test="userCode != null">
+        and user_code = #{userCode,jdbcType=VARCHAR}
+      </if>
+      <if test="userName != null">
+        and user_name like concat('%', #{userName,jdbcType=VARCHAR}, '%')
+      </if>
+      <if test="userEmail != null">
+        and user_email = #{userEmail,jdbcType=VARCHAR}
+      </if>
+      <if test="status != null">
+        and status = #{status,jdbcType=VARCHAR}
+      </if>
+    </where>
+  </select>
+
+  <update id="updateNonNullFieldsById">
+    update t_user
+    <set>
+      <if test="userCode != null">
+        user_code = #{userCode,jdbcType=VARCHAR},
+      </if>
+      <if test="userName != null">
+        user_name = #{userName,jdbcType=VARCHAR},
+      </if>
+      <if test="userEmail != null">
+        user_email = #{userEmail,jdbcType=VARCHAR},
+      </if>
+      <if test="status != null">
+        status = #{status,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=BIGINT}
+  </update>
+</mapper>
