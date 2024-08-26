@@ -13,7 +13,7 @@ import java.io.Serializable;
 @Setter
 @Getter
 @ToString
-public class DRole implements Serializable {
+public class RoleDto implements Serializable {
 
   private static final long serialVersionUID = 1L;
 

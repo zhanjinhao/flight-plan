@@ -45,7 +45,7 @@ public class SqlVitaminConfig {
     return new TombstoneRewriterConfigurer(
             new DruidTombstoneRewriter(
                     null,
-                    ArrayUtils.asArrayList("t_snow_flake_worker_id"),
+                    ArrayUtils.asArrayList("t_snow_flake_worker_id", "^ACT_.*", "^FLW_.*"),
                     new DefaultDataConvertorRegistry()));
   }
 
@@ -54,7 +54,7 @@ public class SqlVitaminConfig {
     return new BaseEntityRewriterConfigurer(
             new DruidBaseEntityRewriter(
                     null,
-                    ArrayUtils.asArrayList("t_snow_flake_worker_id"),
+                    ArrayUtils.asArrayList("t_snow_flake_worker_id", "^ACT_.*", "^FLW_.*"),
                     new DefaultBaseEntitySource(),
                     new DefaultDataConvertorRegistry()));
   }

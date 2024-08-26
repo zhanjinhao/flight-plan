@@ -31,4 +31,6 @@ public interface UserManager {
 
   User queryByUserCode(String userId);
 
+  List<User> queryByUserCodeList(List<String> userCodeList);
+
 }

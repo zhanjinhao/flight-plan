@@ -29,4 +29,8 @@ public interface RoleMapper {
 
   List<Role> queryByNonNullFields(Role role);
 
+  List<Role> queryByRoleCodeList(@Param("roleCodeList") List<String> roleCodeList);
+
+  List<Role> queryByIdList(@Param("idList") List<Long> idList);
+
 }

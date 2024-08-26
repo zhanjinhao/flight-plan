@@ -54,6 +54,16 @@
     where user_code = #{userCode,jdbcType=VARCHAR}
   </select>
 
+  <select id="queryByUserCodeList" resultMap="tUserRm">
+    select
+    <include refid="allFields"/>
+    from t_user
+    where user_code in
+    <foreach collection="userCodeList" item="userCode" separator="," open="(" close=")">
+      #{userCode,jdbcType=VARCHAR}
+    </foreach>
+  </select>
+
   <select id="queryByNonNullFields" resultMap="tUserRm">
     select
     <include refid="allFields"/>

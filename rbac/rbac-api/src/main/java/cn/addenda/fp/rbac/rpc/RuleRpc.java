@@ -1,6 +1,6 @@
 package cn.addenda.fp.rbac.rpc;
 
-import cn.addenda.fp.rbac.dto.DRule;
+import cn.addenda.fp.rbac.dto.RuleDto;
 
 import java.util.List;
 
@@ -10,6 +10,6 @@ import java.util.List;
  */
 public interface RuleRpc {
 
-  List<DRule> queryRuleList(String userId);
+  List<RuleDto> queryRuleList(String userId);
 
 }

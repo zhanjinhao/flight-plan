@@ -6,7 +6,9 @@ import cn.addenda.fp.rbac.mapper.RoleMapper;
 import cn.addenda.fp.rbac.pojo.entity.Role;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -56,6 +58,22 @@ public class RoleManagerImpl implements RoleManager {
   public Role queryByRoleCode(String roleCode) {
     return redisCacheHelper.queryWithPpf(RedisKeyConst.ROLE_ROLE_CODE_KEY,
             roleCode, Role.class, roleMapper::queryByRoleCode, RedisKeyConst.CACHE_DEFAULT_TTL);
+  }
+
+  @Override
+  public List<Role> queryByRoleCodeList(List<String> roleCodeList) {
+    if (CollectionUtils.isEmpty(roleCodeList)) {
+      return new ArrayList<>();
+    }
+    return roleMapper.queryByRoleCodeList(roleCodeList);
+  }
+
+  @Override
+  public List<Role> queryByIdList(List<Long> idList) {
+    if (CollectionUtils.isEmpty(idList)) {
+      return new ArrayList<>();
+    }
+    return roleMapper.queryByIdList(idList);
   }
 
   @Override

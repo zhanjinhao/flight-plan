@@ -28,4 +28,8 @@ public interface RoleManager {
 
   Role queryByRoleCode(String roleCode);
 
+  List<Role> queryByRoleCodeList(List<String> roleCodeList);
+
+  List<Role> queryByIdList(List<Long> roleIdList);
+
 }

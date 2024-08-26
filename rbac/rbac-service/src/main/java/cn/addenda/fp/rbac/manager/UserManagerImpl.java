@@ -6,7 +6,9 @@ import cn.addenda.fp.rbac.mapper.UserMapper;
 import cn.addenda.fp.rbac.pojo.entity.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -66,6 +68,14 @@ public class UserManagerImpl implements UserManager {
   public User queryByUserCode(String userCode) {
     return redisCacheHelper.queryWithPpf(RedisKeyConst.USER_USER_CODE_KEY,
             userCode, User.class, userMapper::queryByUserCode, RedisKeyConst.CACHE_DEFAULT_TTL);
+  }
+
+  @Override
+  public List<User> queryByUserCodeList(List<String> userCodeList) {
+    if (CollectionUtils.isEmpty(userCodeList)) {
+      return new ArrayList<>();
+    }
+    return userMapper.queryByUserCodeList(userCodeList);
   }
 
   @Override

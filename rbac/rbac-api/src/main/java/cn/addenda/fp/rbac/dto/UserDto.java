@@ -8,17 +8,21 @@ import java.io.Serializable;
 
 /**
  * @author addenda
- * @since 2022/12/4 14:10
+ * @since 2022/11/26 20:45
  */
 @Setter
 @Getter
 @ToString
-public class DRule implements Serializable {
+public class UserDto implements Serializable {
 
   private static final long serialVersionUID = 1L;
 
-  private String tableName;
+  private String userCode;
 
-  private String condition;
+  private String userName;
+
+  private String userEmail;
+
+  private String status;
 
 }

@@ -23,6 +23,8 @@ public interface UserMapper {
 
   User queryByUserCode(@Param("userCode") String userCode);
 
+  List<User> queryByUserCodeList(@Param("userCodeList") List<String> userCodeList);
+
   List<User> queryByNonNullFields(User user);
 
   void updateNonNullFieldsById(User user);

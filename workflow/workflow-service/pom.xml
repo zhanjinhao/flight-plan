@@ -21,6 +21,11 @@
   <dependencies>
     <dependency>
       <groupId>cn.addenda</groupId>
+      <artifactId>rbac-api</artifactId>
+      <version>1.0-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>cn.addenda</groupId>
       <artifactId>workflow-api</artifactId>
       <version>1.0-SNAPSHOT</version>
     </dependency>
@@ -108,6 +113,17 @@
     <dependency>
       <groupId>org.springframework.cloud</groupId>
       <artifactId>spring-cloud-starter-bootstrap</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework.cloud</groupId>
+      <artifactId>spring-cloud-starter-loadbalancer</artifactId>
+    </dependency>
+
+    <!-- flowable -->
+    <dependency>
+      <groupId>org.flowable</groupId>
+      <artifactId>flowable-spring-boot-starter</artifactId>
     </dependency>
 
     <!--测试期依赖-->

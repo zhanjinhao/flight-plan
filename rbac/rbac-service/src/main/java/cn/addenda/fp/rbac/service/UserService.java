@@ -3,6 +3,8 @@ package cn.addenda.fp.rbac.service;
 import cn.addenda.fp.rbac.pojo.entity.User;
 import com.github.pagehelper.PageInfo;
 
+import java.util.List;
+
 /**
  * @author addenda
  * @since 2022/2/7 17:15
@@ -22,5 +24,9 @@ public interface UserService {
   Boolean deleteById(Long id);
 
   User queryByUserCode(String userCode);
+
+  List<User> queryByUserCodeList(List<String> userCode);
+
+  List<User> queryByRoleCode(String groupCode);
 
 }

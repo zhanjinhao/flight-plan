@@ -62,6 +62,26 @@
     where role_code = #{roleCode,jdbcType=VARCHAR}
   </select>
 
+  <select id="queryByRoleCodeList" resultMap="tRoleRm">
+    select
+    <include refid="allFields"/>
+    from t_role
+    where role_code in
+    <foreach collection="roleCodeList" item="roleCode" open="(" close=")" separator=",">
+      #{roleCode,jdbcType=VARCHAR}
+    </foreach>
+  </select>
+
+  <select id="queryByIdList" resultMap="tRoleRm">
+    select
+    <include refid="allFields"/>
+    from t_role
+    where id in
+    <foreach collection="idList" item="roleId" open="(" close=")" separator=",">
+      #{roleId,jdbcType=BIGINT}
+    </foreach>
+  </select>
+
   <select id="queryByNonNullFields" resultMap="tRoleRm">
     select
     <include refid="allFields"/>

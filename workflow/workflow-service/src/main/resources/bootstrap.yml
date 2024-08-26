@@ -24,6 +24,15 @@ spring:
         enabled: true
         refresh-enabled: true
 
+flowable:
+  async-executor-activate: false
+  async-history-executor-activate: false
+  #  将databaseSchemaUpdate设置为true。当Flowable发现库与数据库表结构不一致时，会自动将数据库表结构升级至新版本。
+  #  将databaseSchemaUpdate设置为false。当Flowable发现库与数据库表结构不一致时，会报异常。
+  #  将databaseSchemaUpdate设置为none。Flowable不处理建表。
+  database-schema-update: none
+  history-level: full
+
 mybatis:
   mapper-locations: classpath:mapper/*.xml
   configuration:

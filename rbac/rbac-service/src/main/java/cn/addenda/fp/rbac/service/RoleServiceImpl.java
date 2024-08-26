@@ -5,15 +5,20 @@ import cn.addenda.component.lockhelper.Locked;
 import cn.addenda.component.transaction.TransactionHelper;
 import cn.addenda.fp.rbac.manager.RoleManager;
 import cn.addenda.fp.rbac.manager.RoleModuleManager;
+import cn.addenda.fp.rbac.manager.UserManager;
 import cn.addenda.fp.rbac.manager.UserRoleManager;
 import cn.addenda.fp.rbac.pojo.entity.Role;
+import cn.addenda.fp.rbac.pojo.entity.User;
+import cn.addenda.fp.rbac.pojo.entity.UserRole;
 import com.github.pagehelper.PageInfo;
 import com.github.pagehelper.page.PageMethod;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author addenda
@@ -24,6 +29,9 @@ public class RoleServiceImpl implements RoleService {
 
   @Autowired
   private RoleManager roleManager;
+
+  @Autowired
+  private UserManager userManager;
 
   @Autowired
   private UserRoleManager userRoleManager;
@@ -73,6 +81,22 @@ public class RoleServiceImpl implements RoleService {
       roleManager.update(role);
       return true;
     });
+  }
+
+  @Override
+  public List<Role> queryByRoleCodeList(List<String> roleCodeList) {
+    return roleManager.queryByRoleCodeList(roleCodeList);
+  }
+
+  @Override
+  public List<Role> queryRoleOfUser(String userCode) {
+    User user = userManager.queryByUserCode(userCode);
+    if (user == null) {
+      return new ArrayList<>();
+    }
+    List<UserRole> userRoles = userRoleManager.queryRoleOfUser(user.getId());
+    List<Long> roleIdList = userRoles.stream().map(UserRole::getRoleId).collect(Collectors.toList());
+    return roleManager.queryByIdList(roleIdList);
   }
 
   @Override
