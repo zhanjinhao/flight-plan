@@ -3,10 +3,12 @@ package cn.addenda.fp.rbac.config;
 import cn.addenda.component.user.UserTransmitFilter;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
 /**
  * 用户配置自动装配
  */
+@Configuration
 public class UserContextConfig {
 
   /**
