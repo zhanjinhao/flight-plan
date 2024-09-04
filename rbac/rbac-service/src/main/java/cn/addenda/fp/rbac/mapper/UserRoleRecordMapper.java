@@ -18,7 +18,7 @@ public interface UserRoleRecordMapper {
 
   void deleteByUserId(@Param("userId") Long userId);
 
-  @ConfigBaseEntity(masterView = "t_user_role_record", selectDisable = BoolConfig.FALSE)
+  @ConfigBaseEntity(masterView = "t_user_role_record", selectDisable = BoolConfig.TRUE)
   UserRole queryLoginRole(@Param("userId") Long userId);
 
 }

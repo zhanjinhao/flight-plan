@@ -3,6 +3,7 @@ package cn.addenda.fp.rbac.mapper;
 import cn.addenda.fp.rbac.pojo.entity.Role;
 import cn.addenda.fp.rbac.pojo.entity.RoleModule;
 import cn.addenda.sql.vitamin.client.common.annotation.ConfigBaseEntity;
+import cn.addenda.sql.vitamin.client.common.constant.BoolConfig;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
@@ -19,7 +20,7 @@ public interface RoleModuleMapper {
 
   void insert(RoleModule roleModule);
 
-  @ConfigBaseEntity(masterView = "role")
+  @ConfigBaseEntity(masterView = "role", selectDisable = BoolConfig.FALSE)
   List<Role> queryRoleOnModule(@Param("moduleId") Long moduleId);
 
   void deleteByRoleId(@Param("roleId") Long roleId);
