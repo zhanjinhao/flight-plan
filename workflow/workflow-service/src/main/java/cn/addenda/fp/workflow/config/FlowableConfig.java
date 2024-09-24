@@ -4,7 +4,16 @@ import cn.addenda.fp.rbac.dto.RoleDto;
 import cn.addenda.fp.rbac.dto.UserDto;
 import cn.addenda.fp.rbac.rpc.RoleRpc;
 import cn.addenda.fp.rbac.rpc.UserRpc;
+import cn.addenda.fp.workflow.flowable.listener.ActivityTimeoutCallbackListener;
+import cn.addenda.fp.workflow.flowable.listener.MultiInstanceCollectionAssignmentListener;
+import cn.addenda.fp.workflow.flowable.listener.ProcessStatusCompleteListener;
+import cn.addenda.fp.workflow.flowable.listener.SingleInstanceGroupCodeAssignmentListener;
+import cn.addenda.fp.workflow.manager.UserManager;
+import cn.addenda.fp.workflow.service.InstanceService;
+import org.flowable.common.engine.api.delegate.event.FlowableEngineEventType;
 import org.flowable.common.engine.impl.interceptor.CommandContext;
+import org.flowable.engine.ProcessEngine;
+import org.flowable.engine.RuntimeService;
 import org.flowable.idm.api.*;
 import org.flowable.idm.engine.impl.GroupQueryImpl;
 import org.flowable.idm.engine.impl.UserQueryImpl;
@@ -13,20 +22,90 @@ import org.flowable.idm.engine.impl.persistence.entity.UserEntity;
 import org.flowable.idm.engine.impl.persistence.entity.UserEntityImpl;
 import org.flowable.idm.spring.SpringIdmEngineConfiguration;
 import org.flowable.spring.boot.EngineConfigurationConfigurer;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
+import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Scope;
+import org.springframework.context.event.ContextStartedEvent;
 import org.springframework.util.CollectionUtils;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Configuration
-public class FlowableConfig {
+public class FlowableConfig implements ApplicationListener<ContextStartedEvent>, ApplicationContextAware {
+
+  private ApplicationContext applicationContext;
 
   @Bean
   public EngineConfigurationConfigurer<SpringIdmEngineConfiguration> idmEngineConfigurationConfigurer(UserRpc userRpc, RoleRpc roleRpc) {
     return idmEngineConfiguration -> idmEngineConfiguration.setIdmIdentityService(new MyIdmIdentityServiceImpl(userRpc, roleRpc));
+  }
+
+  @Bean
+  @Scope(scopeName = ConfigurableBeanFactory.SCOPE_PROTOTYPE)
+  public MultiInstanceCollectionAssignmentListener multiInstanceCollectionAssignmentListener(UserManager userManager) {
+    MultiInstanceCollectionAssignmentListener multiInstanceCollectionAssignmentListener = new MultiInstanceCollectionAssignmentListener();
+    multiInstanceCollectionAssignmentListener.setUserManager(userManager);
+    return multiInstanceCollectionAssignmentListener;
+  }
+
+  @Bean
+  public ProcessStatusCompleteListener processStatusCompleteListener(RuntimeService runtimeService) {
+    return new ProcessStatusCompleteListener(runtimeService);
+  }
+
+  @Bean
+  @Scope(scopeName = ConfigurableBeanFactory.SCOPE_PROTOTYPE)
+  public ActivityTimeoutCallbackListener activityTimeoutCallbackListener(InstanceService instanceService) {
+    // todo feign和restTemplate用同一个底层
+    RestTemplate restTemplate = new RestTemplate();
+    ActivityTimeoutCallbackListener activityTimeoutCallbackListener = new ActivityTimeoutCallbackListener();
+    activityTimeoutCallbackListener.setInstanceService(instanceService);
+    activityTimeoutCallbackListener.setRestTemplate(restTemplate);
+    return activityTimeoutCallbackListener;
+  }
+
+  @Bean
+  @Scope(scopeName = ConfigurableBeanFactory.SCOPE_PROTOTYPE)
+  public SingleInstanceGroupCodeAssignmentListener singleInstanceGroupCodeAssignmentListener() {
+    return new SingleInstanceGroupCodeAssignmentListener();
+  }
+
+//  @Bean
+//  public DefaultAsyncJobExecutor asyncExecutor(StandaloneProcessEngineConfiguration processEngineConfiguration) {
+//    ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+//    executor.setCorePoolSize(5); // 核心线程数
+//    executor.setMaxPoolSize(10); // 最大线程数
+//    executor.setQueueCapacity(100); // 队列大小
+//    executor.initialize();
+//    DefaultAsyncJobExecutor asyncExecutor = new DefaultAsyncJobExecutor();
+//    asyncExecutor.setProcessEngineConfiguration(processEngineConfiguration);
+//    asyncExecutor.setThreadPoolSize(5); // 这里的值应该与taskExecutor的核心线程数一致
+//    asyncExecutor.setQueueCapacity(100); // 这里的值应该与taskExecutor的队列大小一致
+//    asyncExecutor.setDelegate(taskExecutor);
+//    asyncExecutor.initialize();
+//    return asyncExecutor;
+//  }
+
+  @Override
+  public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+    this.applicationContext = applicationContext;
+  }
+
+  @Override
+  public void onApplicationEvent(ContextStartedEvent event) {
+    ProcessEngine processEngine = applicationContext.getBean(ProcessEngine.class);
+    RuntimeService runtimeService = processEngine.getRuntimeService();
+    ProcessStatusCompleteListener processStatusCompleteListener = applicationContext.getBean(ProcessStatusCompleteListener.class);
+    // 流程正常结束
+    runtimeService.addEventListener(processStatusCompleteListener, FlowableEngineEventType.PROCESS_COMPLETED);
   }
 
   static class MyGroupQueryImpl extends GroupQueryImpl {

@@ -1,0 +1,402 @@
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:flowable="http://flowable.org/bpmn"
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+             xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC" xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+             typeLanguage="http://www.w3.org/2001/XMLSchema" expressionLanguage="http://www.w3.org/1999/XPath"
+             targetNamespace="http://www.flowable.org/processdef" exporter="Flowable Open Source Modeler"
+             exporterVersion="6.8.1">
+  <message id="adminPassMessage" name="超管通过消息"/>
+  <process id="WeekFlightPublish" name="周计划发布" isExecutable="true" flowable:candidateStarterUsers="${initiator}">
+    <startEvent id="WeekFlightPublish-Start" flowable:formFieldValidation="true"/>
+    <userTask id="WeekFlightPublish-Publish" name="发布周计划" flowable:candidateGroups="${SchedulingGroupCode}"
+              flowable:formFieldValidation="true"/>
+    <parallelGateway id="WeekFlightPublish-ParallelGateway11"/>
+    <userTask id="WeekFlightPublish-InterFlight" name="国际航班审核" flowable:candidateGroups="${InterFlightGroupCode}"
+              flowable:formFieldValidation="true"/>
+    <userTask id="WeekFlightPublish-DomFlight" name="国内航班审核" flowable:candidateGroups="${DomFlightGroupCode}"
+              flowable:formFieldValidation="true"/>
+    <parallelGateway id="WeekFlightPublish-ParallelGateway12"/>
+    <endEvent id="WeekFlightPublish-End"/>
+    <sequenceFlow id="sid-A5921BEF-C7DB-461F-A300-BD7EB3372054" sourceRef="WeekFlightPublish-InterFlight"
+                  targetRef="WeekFlightPublish-ParallelGateway12"/>
+    <sequenceFlow id="sid-7247DEC8-6F9D-414D-896A-D2D56777F8EE" sourceRef="WeekFlightPublish-Publish"
+                  targetRef="WeekFlightPublish-ParallelGateway11"/>
+    <sequenceFlow id="sid-1931C5CB-C78E-4035-B46E-8E2D3FFE501E" sourceRef="WeekFlightPublish-DomFlight"
+                  targetRef="WeekFlightPublish-ParallelGateway12"/>
+    <subProcess id="WeekFlightPublish-ApprovalSubProcess" name="审批子流程">
+      <userTask id="WeekFlightPublish-SchedulingLeader2" name="排班组长"
+                flowable:candidateGroups="${SchedulingLeaderGroupCode}" flowable:formFieldValidation="true"/>
+      <startEvent id="WeekFlightPublish-SubStart" flowable:formFieldValidation="true"/>
+      <userTask id="WeekFlightPublish-SchedulingManager" name="排班经理" flowable:assignee="${schedulingManager}"
+                flowable:formFieldValidation="true">
+        <extensionElements>
+          <modeler:initiator-can-complete xmlns:modeler="http://flowable.org/modeler">
+            <![CDATA[ false ]]>
+          </modeler:initiator-can-complete>
+        </extensionElements>
+        <multiInstanceLoopCharacteristics isSequential="false" flowable:collection="${schedulingManagerList}"
+                                          flowable:elementVariable="schedulingManager">
+          <extensionElements/>
+          <loopCardinality>${schedulingManagerList.size()}</loopCardinality>
+          <completionCondition>${nrOfCompletedInstances==nrOfInstances}</completionCondition>
+        </multiInstanceLoopCharacteristics>
+      </userTask>
+      <endEvent id="WeekFlightPublish-SubEnd"/>
+      <exclusiveGateway id="WeekFlightPublish-ExclusiveGateway11"/>
+      <userTask id="WeekFlightPublish-SchedulingLeader1" name="排班组长"
+                flowable:candidateGroups="${SchedulingLeaderGroupCode}" flowable:formFieldValidation="true"/>
+      <sequenceFlow id="sid-567328C8-95B8-4F03-BE76-C3E46B0B5F40" sourceRef="WeekFlightPublish-SubStart"
+                    targetRef="WeekFlightPublish-ExclusiveGateway11"/>
+      <sequenceFlow id="sid-2A3A0D1D-6B65-4219-90D0-753CEF659F88" sourceRef="WeekFlightPublish-SchedulingManager"
+                    targetRef="WeekFlightPublish-SubEnd"/>
+      <sequenceFlow id="sid-E7106EF1-6BD6-464E-A78D-CF65450AB236" sourceRef="WeekFlightPublish-SchedulingLeader1"
+                    targetRef="WeekFlightPublish-SubEnd"/>
+      <sequenceFlow id="sid-F051B9AF-5EC0-4798-B84E-75CFACC2AA79" name="不存在新航线"
+                    sourceRef="WeekFlightPublish-ExclusiveGateway11" targetRef="WeekFlightPublish-SchedulingLeader1">
+        <extensionElements>
+          <flowable:executionListener event="end" delegateExpression="${singleInstanceGroupCodeAssignmentListener}">
+            <flowable:field name="groupCode">
+              <flowable:string>
+                <![CDATA[ SchedulingLeader ]]>
+              </flowable:string>
+            </flowable:field>
+          </flowable:executionListener>
+        </extensionElements>
+        <conditionExpression xsi:type="tFormalExpression">
+          <![CDATA[ ${existsNewFlightRoute == 'false'} ]]>
+        </conditionExpression>
+      </sequenceFlow>
+      <sequenceFlow id="sid-714A148C-592D-4CA4-BAA3-0CF676B47A39" sourceRef="WeekFlightPublish-SchedulingLeader2"
+                    targetRef="WeekFlightPublish-SchedulingManager">
+        <extensionElements>
+          <flowable:executionListener event="end" delegateExpression="${multiInstanceCollectionAssignmentListener}">
+            <flowable:field name="groupCode">
+              <flowable:string>
+                <![CDATA[ SchedulingManager ]]>
+              </flowable:string>
+            </flowable:field>
+          </flowable:executionListener>
+        </extensionElements>
+      </sequenceFlow>
+      <sequenceFlow id="sid-439B6F4B-BB2C-4C91-AB98-085D6D972690" name="存在新航线"
+                    sourceRef="WeekFlightPublish-ExclusiveGateway11" targetRef="WeekFlightPublish-SchedulingLeader2">
+        <extensionElements>
+          <flowable:executionListener event="end" delegateExpression="${singleInstanceGroupCodeAssignmentListener}">
+            <flowable:field name="groupCode">
+              <flowable:string>
+                <![CDATA[ SchedulingLeader ]]>
+              </flowable:string>
+            </flowable:field>
+          </flowable:executionListener>
+        </extensionElements>
+        <conditionExpression xsi:type="tFormalExpression">
+          <![CDATA[ ${existsNewFlightRoute == 'true'} ]]>
+        </conditionExpression>
+      </sequenceFlow>
+    </subProcess>
+    <exclusiveGateway id="WeekFlightPublish-ExclusiveGateway12"/>
+    <sequenceFlow id="sid-44DCCEA2-36F7-4F3F-824F-98BAC9DE1F2D" sourceRef="WeekFlightPublish-ApprovalSubProcess"
+                  targetRef="WeekFlightPublish-ExclusiveGateway12"/>
+    <sequenceFlow id="sid-CFF8E5C5-360F-458C-81D0-00FE0593A165" sourceRef="WeekFlightPublish-ParallelGateway12"
+                  targetRef="WeekFlightPublish-ApprovalSubProcess"/>
+    <manualTask id="WeekFlightPublish-ApprovalTimeoutTask" name="审批超时回调">
+      <extensionElements>
+        <flowable:executionListener event="start" delegateExpression="${activityTimeoutCallbackListener}">
+          <flowable:field name="timeoutCallbackUrl">
+            <flowable:string>
+              <![CDATA[ http://localhost:21882/workflow/testActivityTimeoutCallbackController/test ]]>
+            </flowable:string>
+          </flowable:field>
+        </flowable:executionListener>
+      </extensionElements>
+    </manualTask>
+    <sequenceFlow id="sid-C404ED7F-FB2C-43B8-A66E-3ECD2E7B4742" name="拒绝"
+                  sourceRef="WeekFlightPublish-ExclusiveGateway12" targetRef="WeekFlightPublish-End">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[ ${SchedulingResult == 'Reject'} ]]>
+      </conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="sid-F2BC7166-D2F6-4A63-B2C9-099B3CD8FB4A" name="通过"
+                  sourceRef="WeekFlightPublish-ExclusiveGateway12" targetRef="WeekFlightPublish-End">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[ ${SchedulingResult == 'Pass'} ]]>
+      </conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="sid-FDDC4AEB-57BC-4774-B0E8-59C067D8AC42" name="退回"
+                  sourceRef="WeekFlightPublish-ExclusiveGateway12" targetRef="WeekFlightPublish-Publish">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[ ${SchedulingResult == 'Return'} ]]>
+      </conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="sid-911B0180-F13B-4CCF-A311-F73787FD332E" name="超管通过"
+                  sourceRef="sid-E6650107-337F-4B3F-8671-063764928319"
+                  targetRef="WeekFlightPublish-ExclusiveGateway12"/>
+    <boundaryEvent id="sid-E6650107-337F-4B3F-8671-063764928319" attachedToRef="WeekFlightPublish-ApprovalSubProcess"
+                   cancelActivity="true">
+      <messageEventDefinition messageRef="adminPassMessage"/>
+    </boundaryEvent>
+    <sequenceFlow id="sid-073D13EE-B398-4D93-9EAC-13CAA2E0AD0A" name="超管通过"
+                  sourceRef="WeekFlightPublish-ExclusiveGateway12" targetRef="WeekFlightPublish-End">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[ ${SchedulingResult == 'AdminPass'} ]]>
+      </conditionExpression>
+    </sequenceFlow>
+    <boundaryEvent id="WeekFlightPublish-ApprovalTimeCycleBoundaryEvent"
+                   attachedToRef="WeekFlightPublish-ApprovalSubProcess" cancelActivity="false">
+      <timerEventDefinition>
+        <timeCycle>R3/${ApprovalTimeCycleBoundaryEventStartDateTime}/PT1M</timeCycle>
+      </timerEventDefinition>
+    </boundaryEvent>
+    <sequenceFlow id="sid-6F554BFC-448E-4639-8DBB-7762D01662D0" sourceRef="WeekFlightPublish-Start"
+                  targetRef="WeekFlightPublish-Publish">
+      <extensionElements>
+        <flowable:executionListener event="end" delegateExpression="${singleInstanceGroupCodeAssignmentListener}">
+          <flowable:field name="groupCode">
+            <flowable:string>
+              <![CDATA[ Scheduling ]]>
+            </flowable:string>
+          </flowable:field>
+        </flowable:executionListener>
+      </extensionElements>
+    </sequenceFlow>
+    <sequenceFlow id="sid-811B9FDF-FE2A-4928-A300-E020734D894D" sourceRef="WeekFlightPublish-ParallelGateway11"
+                  targetRef="WeekFlightPublish-InterFlight">
+      <extensionElements>
+        <flowable:executionListener event="end" delegateExpression="${singleInstanceGroupCodeAssignmentListener}">
+          <flowable:field name="groupCode">
+            <flowable:string>
+              <![CDATA[ InterFlight ]]>
+            </flowable:string>
+          </flowable:field>
+        </flowable:executionListener>
+      </extensionElements>
+    </sequenceFlow>
+    <sequenceFlow id="sid-11B7DB34-E559-48F2-A0B3-F59161972199" sourceRef="WeekFlightPublish-ParallelGateway11"
+                  targetRef="WeekFlightPublish-DomFlight">
+      <extensionElements>
+        <flowable:executionListener event="end" delegateExpression="${singleInstanceGroupCodeAssignmentListener}">
+          <flowable:field name="groupCode">
+            <flowable:string>
+              <![CDATA[ DomFlight ]]>
+            </flowable:string>
+          </flowable:field>
+        </flowable:executionListener>
+      </extensionElements>
+    </sequenceFlow>
+    <sequenceFlow id="sid-C76E05D9-8C1A-4BD1-A474-CAF523BDBA06"
+                  sourceRef="WeekFlightPublish-ApprovalTimeCycleBoundaryEvent"
+                  targetRef="WeekFlightPublish-ApprovalTimeoutTask"/>
+  </process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_WeekFlightPublish">
+    <bpmndi:BPMNPlane bpmnElement="WeekFlightPublish" id="BPMNPlane_WeekFlightPublish">
+      <bpmndi:BPMNShape bpmnElement="WeekFlightPublish-Start" id="BPMNShape_WeekFlightPublish-Start">
+        <omgdc:Bounds height="30.0" width="30.0" x="81.81818004482052" y="247.99999674883765"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="WeekFlightPublish-Publish" id="BPMNShape_WeekFlightPublish-Publish">
+        <omgdc:Bounds height="79.99999999999997" width="100.0" x="141.8181800448205" y="222.99999674883762"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="WeekFlightPublish-ParallelGateway11"
+                        id="BPMNShape_WeekFlightPublish-ParallelGateway11">
+        <omgdc:Bounds height="40.0" width="40.0" x="276.8181800448205" y="242.9999967488376"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="WeekFlightPublish-InterFlight" id="BPMNShape_WeekFlightPublish-InterFlight">
+        <omgdc:Bounds height="80.0" width="100.0" x="336.81818004482056" y="149.99999674883762"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="WeekFlightPublish-DomFlight" id="BPMNShape_WeekFlightPublish-DomFlight">
+        <omgdc:Bounds height="80.0" width="100.0" x="336.81818004482056" y="299.9999967488376"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="WeekFlightPublish-ParallelGateway12"
+                        id="BPMNShape_WeekFlightPublish-ParallelGateway12">
+        <omgdc:Bounds height="40.0" width="40.0" x="441.81818004482056" y="242.9999967488376"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="WeekFlightPublish-End" id="BPMNShape_WeekFlightPublish-End">
+        <omgdc:Bounds height="28.0" width="28.0" x="1036.36361390106" y="249.9544967889433"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="WeekFlightPublish-ApprovalSubProcess"
+                        id="BPMNShape_WeekFlightPublish-ApprovalSubProcess">
+        <omgdc:Bounds height="225.09099991978857" width="392.00824787618967" x="516.8181800448206"
+                      y="150.45449678894332"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="WeekFlightPublish-SchedulingLeader2"
+                        id="BPMNShape_WeekFlightPublish-SchedulingLeader2">
+        <omgdc:Bounds height="80.0" width="100.0" x="654.5454403585642" y="163.9544967889433"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="WeekFlightPublish-SubStart" id="BPMNShape_WeekFlightPublish-SubStart">
+        <omgdc:Bounds height="30.0" width="30.0" x="531.8181800448206" y="248.95449678894332"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="WeekFlightPublish-SchedulingManager"
+                        id="BPMNShape_WeekFlightPublish-SchedulingManager">
+        <omgdc:Bounds height="80.0" width="100.0" x="790.9090737665985" y="163.95449678894332"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="WeekFlightPublish-SubEnd" id="BPMNShape_WeekFlightPublish-SubEnd">
+        <omgdc:Bounds height="28.00000000000003" width="28.0" x="826.9090737665985" y="309.9544967889433"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="WeekFlightPublish-ExclusiveGateway11"
+                        id="BPMNShape_WeekFlightPublish-ExclusiveGateway11">
+        <omgdc:Bounds height="40.0" width="40.0" x="591.8181800448206" y="243.95449678894332"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="WeekFlightPublish-SchedulingLeader1"
+                        id="BPMNShape_WeekFlightPublish-SchedulingLeader1">
+        <omgdc:Bounds height="80.00000000000003" width="100.0" x="654.5454403585642" y="283.9544967889433"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="WeekFlightPublish-ExclusiveGateway12"
+                        id="BPMNShape_WeekFlightPublish-ExclusiveGateway12">
+        <omgdc:Bounds height="40.0" width="40.0" x="940.909070515436" y="243.9544967889433"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="WeekFlightPublish-ApprovalTimeoutTask"
+                        id="BPMNShape_WeekFlightPublish-ApprovalTimeoutTask">
+        <omgdc:Bounds height="80.0" width="100.0" x="675.0" y="60.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="sid-E6650107-337F-4B3F-8671-063764928319"
+                        id="BPMNShape_sid-E6650107-337F-4B3F-8671-063764928319">
+        <omgdc:Bounds height="30.0" width="30.0" x="855.4456124184709" y="135.2506315181449"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="WeekFlightPublish-ApprovalTimeCycleBoundaryEvent"
+                        id="BPMNShape_WeekFlightPublish-ApprovalTimeCycleBoundaryEvent">
+        <omgdc:Bounds height="31.0" width="31.0" x="583.6140595643271" y="134.62792819704214"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="sid-44DCCEA2-36F7-4F3F-824F-98BAC9DE1F2D"
+                       id="BPMNEdge_sid-44DCCEA2-36F7-4F3F-824F-98BAC9DE1F2D"
+                       flowable:sourceDockerX="196.00412393809484" flowable:sourceDockerY="112.5454999598943"
+                       flowable:targetDockerX="20.0" flowable:targetDockerY="20.0">
+        <omgdi:waypoint x="908.7764279210102" y="263.7539193452421"/>
+        <omgdi:waypoint x="940.9401106862663" y="263.8778428228564"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sid-FDDC4AEB-57BC-4774-B0E8-59C067D8AC42"
+                       id="BPMNEdge_sid-FDDC4AEB-57BC-4774-B0E8-59C067D8AC42" flowable:sourceDockerX="20.5"
+                       flowable:sourceDockerY="20.5" flowable:targetDockerX="50.00000000000001"
+                       flowable:targetDockerY="78.99999999999997">
+        <omgdi:waypoint x="961.409070515436" y="283.3980496171703"/>
+        <omgdi:waypoint x="961.409070515436" y="411.3181629299132"/>
+        <omgdi:waypoint x="191.8181800448205" y="411.3181629299132"/>
+        <omgdi:waypoint x="191.8181800448205" y="302.94999674883763"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sid-567328C8-95B8-4F03-BE76-C3E46B0B5F40"
+                       id="BPMNEdge_sid-567328C8-95B8-4F03-BE76-C3E46B0B5F40" flowable:sourceDockerX="15.0"
+                       flowable:sourceDockerY="15.0" flowable:targetDockerX="20.0" flowable:targetDockerY="20.0">
+        <omgdi:waypoint x="561.7681757230085" y="263.9544967889433"/>
+        <omgdi:waypoint x="591.8181800448206" y="263.9544967889433"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sid-C76E05D9-8C1A-4BD1-A474-CAF523BDBA06"
+                       id="BPMNEdge_sid-C76E05D9-8C1A-4BD1-A474-CAF523BDBA06" flowable:sourceDockerX="16.0"
+                       flowable:sourceDockerY="16.0" flowable:targetDockerX="50.0" flowable:targetDockerY="40.0">
+        <omgdi:waypoint x="599.6140595643271" y="134.62792819704214"/>
+        <omgdi:waypoint x="599.6140595643271" y="100.0"/>
+        <omgdi:waypoint x="675.0" y="100.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sid-714A148C-592D-4CA4-BAA3-0CF676B47A39"
+                       id="BPMNEdge_sid-714A148C-592D-4CA4-BAA3-0CF676B47A39" flowable:sourceDockerX="50.0"
+                       flowable:sourceDockerY="40.0" flowable:targetDockerX="50.0" flowable:targetDockerY="40.0">
+        <omgdi:waypoint x="754.4954403585641" y="203.9544967889433"/>
+        <omgdi:waypoint x="790.9090737665985" y="203.9544967889433"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sid-6F554BFC-448E-4639-8DBB-7762D01662D0"
+                       id="BPMNEdge_sid-6F554BFC-448E-4639-8DBB-7762D01662D0" flowable:sourceDockerX="15.0"
+                       flowable:sourceDockerY="15.0" flowable:targetDockerX="50.00000000000001"
+                       flowable:targetDockerY="39.999999999999986">
+        <omgdi:waypoint x="111.76817802057249" y="262.99999674883765"/>
+        <omgdi:waypoint x="141.8181800447564" y="262.99999674883765"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sid-439B6F4B-BB2C-4C91-AB98-085D6D972690"
+                       id="BPMNEdge_sid-439B6F4B-BB2C-4C91-AB98-085D6D972690" flowable:sourceDockerX="20.5"
+                       flowable:sourceDockerY="20.5" flowable:targetDockerX="1.0" flowable:targetDockerY="40.0">
+        <omgdi:waypoint x="612.3181800448206" y="244.45449678894332"/>
+        <omgdi:waypoint x="612.3181800448206" y="203.9544967889433"/>
+        <omgdi:waypoint x="654.5454403585642" y="203.9544967889433"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sid-E7106EF1-6BD6-464E-A78D-CF65450AB236"
+                       id="BPMNEdge_sid-E7106EF1-6BD6-464E-A78D-CF65450AB236" flowable:sourceDockerX="99.0"
+                       flowable:sourceDockerY="40.0" flowable:targetDockerX="14.0" flowable:targetDockerY="14.0">
+        <omgdi:waypoint x="754.4954403585632" y="323.9544967889433"/>
+        <omgdi:waypoint x="826.9090737665985" y="323.9544967889433"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sid-811B9FDF-FE2A-4928-A300-E020734D894D"
+                       id="BPMNEdge_sid-811B9FDF-FE2A-4928-A300-E020734D894D" flowable:sourceDockerX="20.5"
+                       flowable:sourceDockerY="20.5" flowable:targetDockerX="1.0" flowable:targetDockerY="40.0">
+        <omgdi:waypoint x="297.31818004482045" y="243.49999674883756"/>
+        <omgdi:waypoint x="297.31818004482056" y="189.99999674883762"/>
+        <omgdi:waypoint x="336.81818004482056" y="189.99999674883762"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sid-1931C5CB-C78E-4035-B46E-8E2D3FFE501E"
+                       id="BPMNEdge_sid-1931C5CB-C78E-4035-B46E-8E2D3FFE501E" flowable:sourceDockerX="99.0"
+                       flowable:sourceDockerY="40.0" flowable:targetDockerX="20.0" flowable:targetDockerY="20.0">
+        <omgdi:waypoint x="436.7681800448014" y="339.9999967488376"/>
+        <omgdi:waypoint x="461.81818004482056" y="339.9999967488376"/>
+        <omgdi:waypoint x="461.81818004482056" y="282.9129031207491"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sid-911B0180-F13B-4CCF-A311-F73787FD332E"
+                       id="BPMNEdge_sid-911B0180-F13B-4CCF-A311-F73787FD332E" flowable:sourceDockerX="15.0"
+                       flowable:sourceDockerY="15.0" flowable:targetDockerX="20.5" flowable:targetDockerY="20.5">
+        <omgdi:waypoint x="870.304103452872" y="135.25114891980874"/>
+        <omgdi:waypoint x="870.0" y="103.0"/>
+        <omgdi:waypoint x="961.409070515436" y="103.0"/>
+        <omgdi:waypoint x="961.409070515436" y="244.4544967889433"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sid-F051B9AF-5EC0-4798-B84E-75CFACC2AA79"
+                       id="BPMNEdge_sid-F051B9AF-5EC0-4798-B84E-75CFACC2AA79" flowable:sourceDockerX="20.5"
+                       flowable:sourceDockerY="20.5" flowable:targetDockerX="1.0" flowable:targetDockerY="40.0">
+        <omgdi:waypoint x="612.3181800448206" y="283.38859913793664"/>
+        <omgdi:waypoint x="612.3181800448206" y="323.9544967889433"/>
+        <omgdi:waypoint x="654.5454403585642" y="323.9544967889433"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sid-2A3A0D1D-6B65-4219-90D0-753CEF659F88"
+                       id="BPMNEdge_sid-2A3A0D1D-6B65-4219-90D0-753CEF659F88" flowable:sourceDockerX="50.0"
+                       flowable:sourceDockerY="40.0" flowable:targetDockerX="14.0" flowable:targetDockerY="14.0">
+        <omgdi:waypoint x="840.9090737665985" y="243.90449678894333"/>
+        <omgdi:waypoint x="840.9090737665985" y="309.9544967889433"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sid-11B7DB34-E559-48F2-A0B3-F59161972199"
+                       id="BPMNEdge_sid-11B7DB34-E559-48F2-A0B3-F59161972199" flowable:sourceDockerX="20.5"
+                       flowable:sourceDockerY="20.5" flowable:targetDockerX="1.0" flowable:targetDockerY="40.0">
+        <omgdi:waypoint x="297.3181800448205" y="282.4376272971404"/>
+        <omgdi:waypoint x="297.31818004482056" y="339.9999967488376"/>
+        <omgdi:waypoint x="336.81818004482056" y="339.9999967488376"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sid-F2BC7166-D2F6-4A63-B2C9-099B3CD8FB4A"
+                       id="BPMNEdge_sid-F2BC7166-D2F6-4A63-B2C9-099B3CD8FB4A" flowable:sourceDockerX="20.5"
+                       flowable:sourceDockerY="20.5" flowable:targetDockerX="14.0"
+                       flowable:targetDockerY="14.000000000000004">
+        <omgdi:waypoint x="980.4553670991446" y="264.34709699198106"/>
+        <omgdi:waypoint x="1036.3638278488352" y="264.0329064212301"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sid-073D13EE-B398-4D93-9EAC-13CAA2E0AD0A"
+                       id="BPMNEdge_sid-073D13EE-B398-4D93-9EAC-13CAA2E0AD0A" flowable:sourceDockerX="20.5"
+                       flowable:sourceDockerY="20.5" flowable:targetDockerX="14.0" flowable:targetDockerY="14.0">
+        <omgdi:waypoint x="968.9450595943852" y="252.00937305856652"/>
+        <omgdi:waypoint x="1006.0" y="191.0"/>
+        <omgdi:waypoint x="1050.36361390106" y="191.0"/>
+        <omgdi:waypoint x="1050.36361390106" y="249.9544967889433"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sid-C404ED7F-FB2C-43B8-A66E-3ECD2E7B4742"
+                       id="BPMNEdge_sid-C404ED7F-FB2C-43B8-A66E-3ECD2E7B4742" flowable:sourceDockerX="20.5"
+                       flowable:sourceDockerY="20.5" flowable:targetDockerX="14.0"
+                       flowable:targetDockerY="14.000000000000004">
+        <omgdi:waypoint x="969.0113198117137" y="275.8006363362835"/>
+        <omgdi:waypoint x="1008.0" y="334.0"/>
+        <omgdi:waypoint x="1050.36361390106" y="334.0"/>
+        <omgdi:waypoint x="1050.36361390106" y="277.90444046045707"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sid-CFF8E5C5-360F-458C-81D0-00FE0593A165"
+                       id="BPMNEdge_sid-CFF8E5C5-360F-458C-81D0-00FE0593A165" flowable:sourceDockerX="20.5"
+                       flowable:sourceDockerY="20.5" flowable:targetDockerX="0.9642440908813611"
+                       flowable:targetDockerY="112.54549995989431">
+        <omgdi:waypoint x="481.42304460603833" y="263.3271571117766"/>
+        <omgdi:waypoint x="516.8181800448137" y="263.00823849183683"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sid-7247DEC8-6F9D-414D-896A-D2D56777F8EE"
+                       id="BPMNEdge_sid-7247DEC8-6F9D-414D-896A-D2D56777F8EE" flowable:sourceDockerX="50.00000000000001"
+                       flowable:sourceDockerY="39.999999999999986" flowable:targetDockerX="20.0"
+                       flowable:targetDockerY="20.0">
+        <omgdi:waypoint x="241.76818004482053" y="262.9999967488376"/>
+        <omgdi:waypoint x="276.8181800448205" y="262.9999967488376"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="sid-A5921BEF-C7DB-461F-A300-BD7EB3372054"
+                       id="BPMNEdge_sid-A5921BEF-C7DB-461F-A300-BD7EB3372054" flowable:sourceDockerX="99.0"
+                       flowable:sourceDockerY="40.0" flowable:targetDockerX="20.0" flowable:targetDockerY="20.0">
+        <omgdi:waypoint x="436.7681800448206" y="189.99999674883762"/>
+        <omgdi:waypoint x="461.81818004482056" y="189.99999674883762"/>
+        <omgdi:waypoint x="461.81818004482056" y="242.9999967488376"/>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</definitions>

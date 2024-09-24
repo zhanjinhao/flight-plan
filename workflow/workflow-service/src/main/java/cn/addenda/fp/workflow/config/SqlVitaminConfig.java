@@ -20,8 +20,8 @@ import org.springframework.context.annotation.Configuration;
  * @author addenda
  * @since 2023/8/7 19:16
  */
-@EnableTombstone(order = 4)
-@EnableBaseEntity(order = 3)
+@EnableTombstone(order = 4, disable = true)
+@EnableBaseEntity(order = 3, disable = true)
 @Configuration
 public class SqlVitaminConfig {
 
