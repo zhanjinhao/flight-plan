@@ -9,12 +9,7 @@
     <version>1.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>day-plan</artifactId>
-  <packaging>pom</packaging>
-  <modules>
-    <module>day-plan-api</module>
-    <module>day-plan-service</module>
-  </modules>
+  <artifactId>day-plan-api</artifactId>
 
   <properties>
     <maven.compiler.source>8</maven.compiler.source>
